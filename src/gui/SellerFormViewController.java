@@ -13,6 +13,8 @@ import gui.listeners.DataChangeListener;
 import gui.util.Alerts;
 import gui.util.Constraints;
 import gui.util.Utils;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -21,16 +23,21 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.util.Callback;
 import model.entities.Department;
 import model.entities.Seller;
 import model.exceptions.ValidationException;
+import model.services.DepartmentService;
 import model.services.SellerService;
 
 public class SellerFormViewController implements Initializable {
-	
+
 	private Seller seller;
 	private SellerService service;
+	private DepartmentService deptService;
 	private List<DataChangeListener> dataChangeListeners = new ArrayList<>();
 
 	@FXML
@@ -42,7 +49,7 @@ public class SellerFormViewController implements Initializable {
 	@FXML
 	private DatePicker dtpBirthDate;
 	@FXML
-	private TextField txtBaseSalary;	
+	private TextField txtBaseSalary;
 	@FXML
 	private ComboBox<Department> cbbDepartment;
 	@FXML
@@ -57,48 +64,49 @@ public class SellerFormViewController implements Initializable {
 	private Button btnSave;
 	@FXML
 	private Button btnCancel;
-	
+
+	private ObservableList<Department> obsList;
+
 	public void setSeller(Seller Seller) {
 		this.seller = Seller;
 	}
-	
-	public void setSellerService(SellerService service) {
+
+	public void setServices(SellerService service, DepartmentService deptService) {
 		this.service = service;
+		this.deptService = deptService;
 	}
-	
+
 	public void subscribeDataChangeListener(DataChangeListener listener) {
-		dataChangeListeners.add(listener);		
+		dataChangeListeners.add(listener);
 	}
-	
+
 	@FXML
 	public void onBtnSaveAction(ActionEvent event) {
-		if(seller == null) {
+		if (seller == null) {
 			throw new IllegalStateException("Seller was null");
 		}
-		
-		if(service == null) {
+
+		if (service == null) {
 			throw new IllegalStateException("Service was null");
 		}
-		
+
 		try {
 			seller = getFormData();
 			service.saveOrUpdate(seller);
 			notifyDataChangeListeners();
 			Utils.currentStage(event).close();
-		}
-		catch(ValidationException e) {
+		} catch (ValidationException e) {
 			setErrorMessages(e.getErrors());
-		}
-		catch(DbException e) {
+		} catch (DbException e) {
 			Alerts.showAlert("Database Exception", "Error saving object", e.getMessage(), AlertType.ERROR);
 		}
 	}
-	
+
 	@FXML
 	public void onBtnCancelAction(ActionEvent event) {
 		Utils.currentStage(event).close();
 	}
-	
+
 	@Override
 	public void initialize(URL url, ResourceBundle bundle) {
 		initializeNodes();
@@ -109,53 +117,81 @@ public class SellerFormViewController implements Initializable {
 		Constraints.setTextFieldMaxLength(txtEmail, 70);
 		Utils.formatDatePicker(dtpBirthDate, "dd/MM/yyyy");
 		Constraints.setTextFieldDouble(txtBaseSalary);
+		initializeComboBoxDepartment();
 	}
-	
+
 	public void updateFormData() {
-		if(seller == null) {
+		if (seller == null) {
 			throw new IllegalStateException("Seller was null");
 		}
-		
-		if(seller.getId() != null) {
+
+		if (seller.getId() != null) {
 			txtId.setText(String.valueOf(seller.getId()));
 		}
-		
+
 		txtName.setText(seller.getName());
 		txtEmail.setText(seller.getEmail());
 		dtpBirthDate.setValue(seller.getBirthDate());
 		Locale.setDefault(Locale.US);
 		txtBaseSalary.setText(String.format("%.2f", seller.getBaseSalary()));
+		
+		if(seller.getDepartment() == null) {
+			cbbDepartment.getSelectionModel().selectFirst();
+		} else {
+			cbbDepartment.setValue(seller.getDepartment());
+		}
 	}
-	
+
 	private Seller getFormData() {
 		Seller obj = new Seller();
-		
+
 		ValidationException exceptions = new ValidationException("Validation errors");
-		
+
 		obj.setId(Utils.tryParseToInt(txtId.getText()));
-		
-		if(txtName.getText() == null || txtName.getText().trim().equals("")) {
+
+		if (txtName.getText() == null || txtName.getText().trim().equals("")) {
 			exceptions.addError("name", "field can't be empty");
 		}
 		obj.setName(txtName.getText());
-		
-		if(exceptions.getErrors().size() > 0) {
+
+		if (exceptions.getErrors().size() > 0) {
 			throw exceptions;
 		}
-		
+
 		return obj;
 	}
 
+	public void loadAssociatedObjects() {
+		if (deptService == null) {
+			throw new IllegalStateException("DeptService was null");
+		}
+		List<Department> list = deptService.findAll();
+		obsList = FXCollections.observableArrayList(list);
+		cbbDepartment.setItems(obsList);
+	}
+
+	private void initializeComboBoxDepartment() {
+		Callback<ListView<Department>, ListCell<Department>> factory = lv -> new ListCell<Department>() {
+			@Override
+			protected void updateItem(Department item, boolean empty) {
+				super.updateItem(item, empty);
+				setText(empty ? "" : item.getName());
+			}
+		};
+		cbbDepartment.setCellFactory(factory);
+		cbbDepartment.setButtonCell(factory.call(null));
+	}
+
 	private void notifyDataChangeListeners() {
-		for(DataChangeListener listener : dataChangeListeners) {
+		for (DataChangeListener listener : dataChangeListeners) {
 			listener.onDataChange();
 		}
 	}
-	
+
 	private void setErrorMessages(Map<String, String> errors) {
 		Set<String> fields = errors.keySet();
-		
-		if(fields.contains("name")) {
+
+		if (fields.contains("name")) {
 			lblErrorName.setText(errors.get("name"));
 		}
 	}
