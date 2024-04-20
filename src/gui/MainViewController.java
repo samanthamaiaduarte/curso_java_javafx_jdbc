@@ -3,6 +3,7 @@ package gui;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
+import java.util.function.Consumer;
 
 import application.Main;
 import gui.util.Alerts;
@@ -29,16 +30,25 @@ public class MainViewController implements Initializable {
 	@FXML
 	public void onMitSellerAction() {
 		System.out.println("onMitSellerAction");
+		/*
+		loadView("/gui/SellerListView.fxml", (SellerListViewController controller) -> {
+			controller.setSellerService(new SellerService());
+			controller.updateTableView();			
+		});
+		*/
 	}
 
 	@FXML
 	public void onMitDepartmentAction() {
-		loadView2("/gui/DepartmentListView.fxml");
+		loadView("/gui/DepartmentListView.fxml", (DepartmentListViewController controller) -> {
+			controller.setDepartmentService(new DepartmentService());
+			controller.updateTableView();			
+		});
 	}
 	
 	@FXML
 	public void onMitboutAction() {
-		loadView("/gui/AboutView.fxml");
+		loadView("/gui/AboutView.fxml", x -> {});
 	}
 	
 	@Override
@@ -47,7 +57,7 @@ public class MainViewController implements Initializable {
 		
 	}
 
-	private synchronized void loadView(String absoluteName) {
+	private synchronized <T> void loadView(String absoluteName, Consumer<T> initializingAction) {
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getResource(absoluteName));
 			VBox newVBox = loader.load();
@@ -66,40 +76,13 @@ public class MainViewController implements Initializable {
 			
 			//Adiciona os filhos da nova view
 			mainVBox.getChildren().addAll(newVBox.getChildren());
+			
+			T controller = loader.getController();
+			initializingAction.accept(controller);
 			
 		} catch (IOException e) {
 			Alerts.showAlert("IO Exception", "Error loading view", e.getMessage(), AlertType.ERROR);
 		}
 	}
 	
-	private void loadView2(String absoluteName) {
-		try {
-			FXMLLoader loader = new FXMLLoader(getClass().getResource(absoluteName));
-			VBox newVBox = loader.load();
-			
-			Scene mainScene = Main.getMainScene();
-			VBox mainVBox = (VBox) ((ScrollPane) mainScene.getRoot()).getContent();
-			
-			//Encontra o MainMenu dentro do vbox, ou seja, o primeiro Children
-			Node mainMenu = mainVBox.getChildren().get(0);
-			
-			//Limpa todo o node VBox
-			mainVBox.getChildren().clear();
-			
-			//Adiciona o MainMenu
-			mainVBox.getChildren().add(mainMenu);
-			
-			//Adiciona os filhos da nova view
-			mainVBox.getChildren().addAll(newVBox.getChildren());
-			
-			DepartmentListViewController controller = loader.getController();
-			controller.setDepartmentService(new DepartmentService());
-			controller.updateTableView();
-			
-		} catch (IOException e) {
-			Alerts.showAlert("IO Exception", "Error loading view", e.getMessage(), AlertType.ERROR);
-		}
-	}
-
-
 }
