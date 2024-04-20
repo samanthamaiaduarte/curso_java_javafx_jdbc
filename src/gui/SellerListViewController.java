@@ -78,7 +78,7 @@ public class SellerListViewController implements Initializable, DataChangeListen
 		tbcName.setCellValueFactory(new PropertyValueFactory<>("name"));
 		tbcEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
 		tbcBirthDate.setCellValueFactory(new PropertyValueFactory<>("birthDate"));
-		Utils.formatTableColumnLocalDate(tbcBirthDate, "dd-MM-yyyy");
+		Utils.formatTableColumnLocalDate(tbcBirthDate, "dd/MM/yyyy");
 		tbcBaseSalary.setCellValueFactory(new PropertyValueFactory<>("baseSalary"));
 		Utils.formatTableColumnDouble(tbcBaseSalary, 2);
 

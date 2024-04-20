@@ -3,6 +3,7 @@ package gui;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -28,7 +29,7 @@ import model.services.SellerService;
 
 public class SellerFormViewController implements Initializable {
 	
-	private Seller Seller;
+	private Seller seller;
 	private SellerService service;
 	private List<DataChangeListener> dataChangeListeners = new ArrayList<>();
 
@@ -39,18 +40,26 @@ public class SellerFormViewController implements Initializable {
 	@FXML
 	private TextField txtEmail;
 	@FXML
-	private DatePicker txtBirthDate;
+	private DatePicker dtpBirthDate;
+	@FXML
+	private TextField txtBaseSalary;	
 	@FXML
 	private ComboBox<Department> cbbDepartment;
 	@FXML
-	private Label lblMessage;
+	private Label lblErrorName;
+	@FXML
+	private Label lblErrorEmail;
+	@FXML
+	private Label lblErrorBirthDate;
+	@FXML
+	private Label lblErrorBaseSalary;
 	@FXML
 	private Button btnSave;
 	@FXML
 	private Button btnCancel;
 	
 	public void setSeller(Seller Seller) {
-		this.Seller = Seller;
+		this.seller = Seller;
 	}
 	
 	public void setSellerService(SellerService service) {
@@ -63,7 +72,7 @@ public class SellerFormViewController implements Initializable {
 	
 	@FXML
 	public void onBtnSaveAction(ActionEvent event) {
-		if(Seller == null) {
+		if(seller == null) {
 			throw new IllegalStateException("Seller was null");
 		}
 		
@@ -72,8 +81,8 @@ public class SellerFormViewController implements Initializable {
 		}
 		
 		try {
-			Seller = getFormData();
-			service.saveOrUpdate(Seller);
+			seller = getFormData();
+			service.saveOrUpdate(seller);
 			notifyDataChangeListeners();
 			Utils.currentStage(event).close();
 		}
@@ -96,16 +105,26 @@ public class SellerFormViewController implements Initializable {
 	}
 
 	private void initializeNodes() {
-		Constraints.setTextFieldMaxLength(txtName, 100);
+		Constraints.setTextFieldMaxLength(txtName, 70);
+		Constraints.setTextFieldMaxLength(txtEmail, 70);
+		Utils.formatDatePicker(dtpBirthDate, "dd/MM/yyyy");
+		Constraints.setTextFieldDouble(txtBaseSalary);
 	}
 	
 	public void updateFormData() {
-		if(Seller == null) {
+		if(seller == null) {
 			throw new IllegalStateException("Seller was null");
 		}
 		
-		txtId.setText(String.valueOf(Seller.getId()));
-		txtName.setText(Seller.getName());
+		if(seller.getId() != null) {
+			txtId.setText(String.valueOf(seller.getId()));
+		}
+		
+		txtName.setText(seller.getName());
+		txtEmail.setText(seller.getEmail());
+		dtpBirthDate.setValue(seller.getBirthDate());
+		Locale.setDefault(Locale.US);
+		txtBaseSalary.setText(String.format("%.2f", seller.getBaseSalary()));
 	}
 	
 	private Seller getFormData() {
@@ -137,7 +156,7 @@ public class SellerFormViewController implements Initializable {
 		Set<String> fields = errors.keySet();
 		
 		if(fields.contains("name")) {
-			lblMessage.setText(errors.get("name"));
+			lblErrorName.setText(errors.get("name"));
 		}
 	}
 }

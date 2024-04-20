@@ -95,7 +95,10 @@ public class DepartmentFormViewController implements Initializable {
 			throw new IllegalStateException("Department was null");
 		}
 		
-		txtId.setText(String.valueOf(department.getId()));
+		if(department.getId() != null) {
+			txtId.setText(String.valueOf(department.getId()));
+		}
+		
 		txtName.setText(department.getName());
 	}
 	
