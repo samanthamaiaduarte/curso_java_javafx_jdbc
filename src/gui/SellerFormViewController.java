@@ -154,6 +154,23 @@ public class SellerFormViewController implements Initializable {
 		}
 		obj.setName(txtName.getText());
 
+		if (txtEmail.getText() == null || txtEmail.getText().trim().equals("")) {
+			exceptions.addError("email", "field can't be empty");
+		}
+		obj.setEmail(txtEmail.getText());
+		
+		if(dtpBirthDate.getValue() == null) {
+			exceptions.addError("birthDate", "field can't be empty");
+		}
+		obj.setBirthDate(dtpBirthDate.getValue());
+		
+		if (txtBaseSalary.getText() == null || txtBaseSalary.getText().trim().equals("")) {
+			exceptions.addError("baseSalary", "field can't be empty");
+		}
+		obj.setBaseSalary(Utils.tryParseToDouble(txtBaseSalary.getText()));
+		
+		obj.setDepartment(cbbDepartment.getValue());
+		
 		if (exceptions.getErrors().size() > 0) {
 			throw exceptions;
 		}
@@ -191,8 +208,9 @@ public class SellerFormViewController implements Initializable {
 	private void setErrorMessages(Map<String, String> errors) {
 		Set<String> fields = errors.keySet();
 
-		if (fields.contains("name")) {
-			lblErrorName.setText(errors.get("name"));
-		}
+		lblErrorName.setText(fields.contains("name") ? errors.get("name") : "");
+		lblErrorEmail.setText(fields.contains("email") ? errors.get("email") : "");
+		lblErrorBirthDate.setText(fields.contains("birthDate") ? errors.get("birthDate") : "");
+		lblErrorBaseSalary.setText(fields.contains("baseSalary") ? errors.get("baseSalary") : "");
 	}
 }
